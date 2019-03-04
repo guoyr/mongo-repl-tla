@@ -12,42 +12,34 @@ CONSTANTS FOLLOWER, LEADER, CANDIDATE
 
 Last(s) == s[Len(s)]
 
+LastTerm(s) == Last(s).term
+
 (*
 --algorithm mongoRaft {
 variable
     globalCurrentTerm = 0,
+    \* Global return values;
     rVals = [rVal \in NODES |-> {0}],
     logs = [log \in NODES |-> <<[term |-> globalCurrentTerm, value |-> VALUE]>>],
     states = [state \in NODES |-> {FOLLOWER, CANDIDATE, LEADER}];
 
-
-\* term of the last entry in a log.
-macro GetTerm(xlog, index, term) {
-    if (index = 0) {
-        term := 0;
-    } else {
-        term := xlog[index].term;
-    };
-}
-
-macro LastTerm(xlog, term) {
-    GetTerm(xlog, Len(xlog), term);
-}
-
-\*procedure appendOplog(i, j) {
-\*    if (Len(log[i]) < Len(log[j])) {
-\*      if (LastTerm(log[i]) = LogTerm) {
-\*      
-\*      }
-\*    };
-\*}
-
 macro canElectMe(myLogs, theirLogs, numElectMe) {
-    with (myTerm = Last(myLogs).term, theirTerm = Last(theirLogs).term) {
-        if (myTerm > theirTerm \/ (theirTerm = myTerm /\ Len(logs[self]) >= Len(logs[curNode]))) {
-            numElectMe := numElectMe + 1;
-        }
+    with (myTerm = LastTerm(myLogs), theirTerm = LastTerm(theirLogs)) {    
+        when (myTerm > theirTerm \/ (theirTerm = myTerm /\ Len(logs[self]) >= Len(logs[curNode])));
+        numElectMe := numElectMe + 1;
     }
+}
+
+procedure appendOplog()
+{
+ao0: \* Randomly select a sync source.
+     with (ssNode \in NODES, myLogs = logs[self]) {
+        with (ssLogs = logs[ssNode], myLastTerm = LastTerm(myLogs), ssLastTerm = LastTerm(ssLogs)) {
+            when Len(myLogs) < Len(ssLogs) /\ myLastTerm = ssLastTerm;
+            logs[self] := Append(myLogs, Last(ssLogs));
+            print <<self, "appended oplog:", Last(ssLogs)>>;
+        };
+     };
 }
 
 procedure instantElection() 
@@ -57,16 +49,12 @@ el0: while (curNode <= NUM_NODES) {
         canElectMe(logs[self], logs[curNode], numElectMe);
         curNode := curNode + 1;
      };
-     print<<"num elected me: ", numElectMe, "I am: ", self>>;
+\*     print<<"num elected me: ", numElectMe, "I am: ", self>>;
      
-     if (numElectMe * 2 > NUM_NODES) {
-        globalCurrentTerm := globalCurrentTerm + 1;
-        states := [[state \in NODES |-> FOLLOWER] EXCEPT ![self] = LEADER];
-        print <<"won election, states: ", self, states>>;
-     };
-     
-     
-     
+     when (numElectMe * 2 > NUM_NODES);
+     globalCurrentTerm := globalCurrentTerm + 1;
+     states := [[state \in NODES |-> FOLLOWER] EXCEPT ![self] = LEADER];
+     print <<self, "won election; states:", states>>;
 }
 
 \*electable := Tail(log).term > Tail(logs[self]).term \/
@@ -79,9 +67,11 @@ el0: while (curNode <= NUM_NODES) {
 
 process (Node \in NODES)
 {
-pr0: print <<"starting process: ", self, logs[self]>>;
-
-pr1: call instantElection();
+pr1: either {
+        call instantElection();
+     } or {
+        call appendOplog();
+     }
 }
 
 
@@ -106,52 +96,61 @@ Init == (* Global variables *)
         /\ numElectMe = [ self \in ProcSet |-> 0]
         /\ curNode = [ self \in ProcSet |-> 1]
         /\ stack = [self \in ProcSet |-> << >>]
-        /\ pc = [self \in ProcSet |-> "pr0"]
+        /\ pc = [self \in ProcSet |-> "pr1"]
+
+ao0(self) == /\ pc[self] = "ao0"
+             /\ \E ssNode \in NODES:
+                  LET myLogs == logs[self] IN
+                    LET ssLogs == logs[ssNode] IN
+                      LET myLastTerm == LastTerm(myLogs) IN
+                        LET ssLastTerm == LastTerm(ssLogs) IN
+                          /\ Len(myLogs) < Len(ssLogs) /\ myLastTerm = ssLastTerm
+                          /\ logs' = [logs EXCEPT ![self] = Append(myLogs, Last(ssLogs))]
+                          /\ PrintT(<<self, "appended oplog:", Last(ssLogs)>>)
+             /\ pc' = [pc EXCEPT ![self] = "Error"]
+             /\ UNCHANGED << globalCurrentTerm, rVals, states, stack, 
+                             numElectMe, curNode >>
+
+appendOplog(self) == ao0(self)
 
 el0(self) == /\ pc[self] = "el0"
              /\ IF curNode[self] <= NUM_NODES
-                   THEN /\ LET myTerm == Last((logs[self])).term IN
-                             LET theirTerm == Last((logs[curNode[self]])).term IN
-                               IF myTerm > theirTerm \/ (theirTerm = myTerm /\ Len(logs[self]) >= Len(logs[curNode[self]]))
-                                  THEN /\ numElectMe' = [numElectMe EXCEPT ![self] = numElectMe[self] + 1]
-                                  ELSE /\ TRUE
-                                       /\ UNCHANGED numElectMe
+                   THEN /\ LET myTerm == LastTerm((logs[self])) IN
+                             LET theirTerm == LastTerm((logs[curNode[self]])) IN
+                               /\ (myTerm > theirTerm \/ (theirTerm = myTerm /\ Len(logs[self]) >= Len(logs[curNode[self]])))
+                               /\ numElectMe' = [numElectMe EXCEPT ![self] = numElectMe[self] + 1]
                         /\ curNode' = [curNode EXCEPT ![self] = curNode[self] + 1]
                         /\ pc' = [pc EXCEPT ![self] = "el0"]
                         /\ UNCHANGED << globalCurrentTerm, states >>
-                   ELSE /\ PrintT(<<"num elected me: ", numElectMe[self], "I am: ", self>>)
-                        /\ IF numElectMe[self] * 2 > NUM_NODES
-                              THEN /\ globalCurrentTerm' = globalCurrentTerm + 1
-                                   /\ states' = [[state \in NODES |-> FOLLOWER] EXCEPT ![self] = LEADER]
-                                   /\ PrintT(<<"won election, states: ", self, states'>>)
-                              ELSE /\ TRUE
-                                   /\ UNCHANGED << globalCurrentTerm, states >>
+                   ELSE /\ (numElectMe[self] * 2 > NUM_NODES)
+                        /\ globalCurrentTerm' = globalCurrentTerm + 1
+                        /\ states' = [[state \in NODES |-> FOLLOWER] EXCEPT ![self] = LEADER]
+                        /\ PrintT(<<self, "won election; states:", states'>>)
                         /\ pc' = [pc EXCEPT ![self] = "Error"]
                         /\ UNCHANGED << numElectMe, curNode >>
              /\ UNCHANGED << rVals, logs, stack >>
 
 instantElection(self) == el0(self)
 
-pr0(self) == /\ pc[self] = "pr0"
-             /\ PrintT(<<"starting process: ", self, logs[self]>>)
-             /\ pc' = [pc EXCEPT ![self] = "pr1"]
-             /\ UNCHANGED << globalCurrentTerm, rVals, logs, states, stack, 
-                             numElectMe, curNode >>
-
 pr1(self) == /\ pc[self] = "pr1"
-             /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "instantElection",
-                                                      pc        |->  "Done",
-                                                      numElectMe |->  numElectMe[self],
-                                                      curNode   |->  curNode[self] ] >>
-                                                  \o stack[self]]
-             /\ numElectMe' = [numElectMe EXCEPT ![self] = 0]
-             /\ curNode' = [curNode EXCEPT ![self] = 1]
-             /\ pc' = [pc EXCEPT ![self] = "el0"]
+             /\ \/ /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "instantElection",
+                                                            pc        |->  "Done",
+                                                            numElectMe |->  numElectMe[self],
+                                                            curNode   |->  curNode[self] ] >>
+                                                        \o stack[self]]
+                   /\ numElectMe' = [numElectMe EXCEPT ![self] = 0]
+                   /\ curNode' = [curNode EXCEPT ![self] = 1]
+                   /\ pc' = [pc EXCEPT ![self] = "el0"]
+                \/ /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "appendOplog",
+                                                            pc        |->  "Done" ] >>
+                                                        \o stack[self]]
+                   /\ pc' = [pc EXCEPT ![self] = "ao0"]
+                   /\ UNCHANGED <<numElectMe, curNode>>
              /\ UNCHANGED << globalCurrentTerm, rVals, logs, states >>
 
-Node(self) == pr0(self) \/ pr1(self)
+Node(self) == pr1(self)
 
-Next == (\E self \in ProcSet: instantElection(self))
+Next == (\E self \in ProcSet: appendOplog(self) \/ instantElection(self))
            \/ (\E self \in NODES: Node(self))
            \/ (* Disjunct to prevent deadlock on termination *)
               ((\A self \in ProcSet: pc[self] = "Done") /\ UNCHANGED vars)
