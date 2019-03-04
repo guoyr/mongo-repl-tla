@@ -57,13 +57,12 @@ el0: while (curNode <= NUM_NODES) {
         canElectMe(logs[self], logs[curNode], numElectMe);
         curNode := curNode + 1;
      };
-     print<<"num elected me: ", numElectMe, "I am: ", self>>;
+\*     print<<"numElectMe: ", self, numElectMe>>;
      
      if (numElectMe * 2 > NUM_NODES) {
         globalCurrentTerm := globalCurrentTerm + 1;
-        states := [[state \in NODES |-> FOLLOWER] EXCEPT ![self] = LEADER];
-        print <<"won election, states: ", self, states>>;
-     };
+        states := [[state \in states |-> FOLLOWER] EXCEPT ![self] = LEADER];
+     }
      
      
      
@@ -119,11 +118,9 @@ el0(self) == /\ pc[self] = "el0"
                         /\ curNode' = [curNode EXCEPT ![self] = curNode[self] + 1]
                         /\ pc' = [pc EXCEPT ![self] = "el0"]
                         /\ UNCHANGED << globalCurrentTerm, states >>
-                   ELSE /\ PrintT(<<"num elected me: ", numElectMe[self], "I am: ", self>>)
-                        /\ IF numElectMe[self] * 2 > NUM_NODES
+                   ELSE /\ IF numElectMe[self] * 2 > NUM_NODES
                               THEN /\ globalCurrentTerm' = globalCurrentTerm + 1
-                                   /\ states' = [[state \in NODES |-> FOLLOWER] EXCEPT ![self] = LEADER]
-                                   /\ PrintT(<<"won election, states: ", self, states'>>)
+                                   /\ states' = [[state \in states |-> FOLLOWER] EXCEPT ![self] = LEADER]
                               ELSE /\ TRUE
                                    /\ UNCHANGED << globalCurrentTerm, states >>
                         /\ pc' = [pc EXCEPT ![self] = "Error"]

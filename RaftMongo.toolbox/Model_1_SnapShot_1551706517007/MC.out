@@ -1,0 +1,181 @@
+@!@!@STARTMSG 2262:0 @!@!@
+TLC2 Version 2.13 of 18 July 2018
+@!@!@ENDMSG 2262 @!@!@
+@!@!@STARTMSG 2187:0 @!@!@
+Running breadth-first search Model-Checking with seed 3021392809594931114 with 3 workers on 6 cores with 650MB heap and 1295MB offheap memory (Linux 4.18.0-15-generic amd64, Oracle Corporation 10.0.2 x86_64).
+@!@!@ENDMSG 2187 @!@!@
+@!@!@STARTMSG 2220:0 @!@!@
+Starting SANY...
+@!@!@ENDMSG 2220 @!@!@
+Parsing file /home/guo/mongo-repl-tla/RaftMongo.toolbox/Model_1/MC.tla
+Parsing file /home/guo/mongo-repl-tla/RaftMongo.toolbox/Model_1/RaftMongo.tla
+Parsing file /opt/tla-toolbox/plugins/org.lamport.tlatools_1.0.0.201807180447/tla2sany/StandardModules/TLC.tla
+Parsing file /opt/tla-toolbox/plugins/org.lamport.tlatools_1.0.0.201807180447/tla2sany/StandardModules/Naturals.tla
+Parsing file /opt/tla-toolbox/plugins/org.lamport.tlatools_1.0.0.201807180447/tla2sany/StandardModules/FiniteSets.tla
+Parsing file /opt/tla-toolbox/plugins/org.lamport.tlatools_1.0.0.201807180447/tla2sany/StandardModules/Sequences.tla
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module TLC
+Semantic processing of module RaftMongo
+Semantic processing of module MC
+@!@!@STARTMSG 2219:0 @!@!@
+SANY finished.
+@!@!@ENDMSG 2219 @!@!@
+@!@!@STARTMSG 2185:0 @!@!@
+Starting... (2019-03-04 08:35:14)
+@!@!@ENDMSG 2185 @!@!@
+@!@!@STARTMSG 2189:0 @!@!@
+Computing initial states...
+@!@!@ENDMSG 2189 @!@!@
+@!@!@STARTMSG 2190:0 @!@!@
+Finished computing initial states: 1 distinct state generated.
+@!@!@ENDMSG 2190 @!@!@
+<<"starting process: ", 1, <<[term |-> 0, value |-> 42]>>>>
+<<"starting process: ", 2, <<[term |-> 0, value |-> 42]>>>>
+<<"starting process: ", 2, <<[term |-> 0, value |-> 42]>>>>
+<<"starting process: ", 1, <<[term |-> 0, value |-> 42]>>>>
+<<"starting process: ", 2, <<[term |-> 0, value |-> 42]>>>>
+<<"starting process: ", 1, <<[term |-> 0, value |-> 42]>>>>
+<<"starting process: ", 2, <<[term |-> 0, value |-> 42]>>>>
+<<"starting process: ", 1, <<[term |-> 0, value |-> 42]>>>>
+<<"numElectMe: ", 1, 2>>
+<<"starting process: ", 2, <<[term |-> 0, value |-> 42]>>>>
+<<"numElectMe: ", 2, 2>>
+<<"starting process: ", 1, <<[term |-> 0, value |-> 42]>>>>
+<<"starting process: ", 2, <<[term |-> 0, value |-> 42]>>>>
+<<"numElectMe: ", 1, 2>>
+<<"numElectMe: ", 2, 2>>
+<<"starting process: ", 1, <<[term |-> 0, value |-> 42]>>>>
+<<"numElectMe: ", 1, 2>>
+<<"numElectMe: ", 2, 2>>
+<<"numElectMe: ", 1, 2>>
+<<"numElectMe: ", 2, 2>>
+<<"numElectMe: ", 1, 2>>
+<<"numElectMe: ", 2, 2>>
+<<"numElectMe: ", 2, 2>>
+<<"numElectMe: ", 1, 2>>
+@!@!@STARTMSG 2193:0 @!@!@
+Model checking completed. No error has been found.
+  Estimates of the probability that TLC did not check all reachable states
+  because two distinct states had the same fingerprint:
+  calculated (optimistic):  val = 4.9E-17
+  based on the actual fingerprints:  val = 3.8E-16
+@!@!@ENDMSG 2193 @!@!@
+@!@!@STARTMSG 2201:0 @!@!@
+The coverage statistics at 2019-03-04 08:35:16
+@!@!@ENDMSG 2201 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 104, col 43 to line 104, col 106 of module RaftMongo: 24
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 106, col 53 to line 106, col 62 of module RaftMongo: 0
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 107, col 28 to line 107, col 82 of module RaftMongo: 24
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 108, col 28 to line 108, col 60 of module RaftMongo: 24
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 110, col 28 to line 110, col 62 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 111, col 41 to line 111, col 50 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 111, col 53 to line 111, col 59 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 112, col 30 to line 112, col 46 of module RaftMongo: 36
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 112, col 49 to line 112, col 53 of module RaftMongo: 36
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 112, col 56 to line 112, col 59 of module RaftMongo: 36
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 112, col 62 to line 112, col 66 of module RaftMongo: 36
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 118, col 17 to line 118, col 49 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 119, col 30 to line 119, col 46 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 119, col 49 to line 119, col 53 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 119, col 56 to line 119, col 59 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 119, col 62 to line 119, col 66 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 119, col 69 to line 119, col 78 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 120, col 30 to line 120, col 36 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 123, col 17 to line 127, col 65 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 128, col 17 to line 128, col 61 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 129, col 17 to line 129, col 55 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 130, col 17 to line 130, col 49 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 131, col 30 to line 131, col 46 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 131, col 49 to line 131, col 53 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 131, col 56 to line 131, col 59 of module RaftMongo: 12
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 85, col 12 to line 85, col 28 of module RaftMongo: 0
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 85, col 31 to line 85, col 35 of module RaftMongo: 0
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 85, col 38 to line 85, col 41 of module RaftMongo: 0
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 85, col 44 to line 85, col 45 of module RaftMongo: 0
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 85, col 48 to line 85, col 52 of module RaftMongo: 0
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 85, col 55 to line 85, col 64 of module RaftMongo: 0
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 85, col 67 to line 85, col 73 of module RaftMongo: 0
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2202:0 @!@!@
+End of statistics.
+@!@!@ENDMSG 2202 @!@!@
+@!@!@STARTMSG 2200:0 @!@!@
+Progress(11) at 2019-03-04 08:35:16: 61 states generated (1,620 s/min), 36 distinct states found (956 ds/min), 0 states left on queue.
+@!@!@ENDMSG 2200 @!@!@
+@!@!@STARTMSG 2199:0 @!@!@
+61 states generated, 36 distinct states found, 0 states left on queue.
+@!@!@ENDMSG 2199 @!@!@
+@!@!@STARTMSG 2194:0 @!@!@
+The depth of the complete state graph search is 11.
+@!@!@ENDMSG 2194 @!@!@
+@!@!@STARTMSG 2268:0 @!@!@
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 2 and the 95th percentile is 2).
+@!@!@ENDMSG 2268 @!@!@
+@!@!@STARTMSG 2186:0 @!@!@
+Finished in 2409ms at (2019-03-04 08:35:16)
+@!@!@ENDMSG 2186 @!@!@

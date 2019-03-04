@@ -8,8 +8,6 @@ CONSTANT VALUE
 
 CONSTANT TERMS
 
-CONSTANTS FOLLOWER, LEADER, CANDIDATE
-
 Last(s) == s[Len(s)]
 
 (*
@@ -17,8 +15,7 @@ Last(s) == s[Len(s)]
 variable
     globalCurrentTerm = 0,
     rVals = [rVal \in NODES |-> {0}],
-    logs = [log \in NODES |-> <<[term |-> globalCurrentTerm, value |-> VALUE]>>],
-    states = [state \in NODES |-> {FOLLOWER, CANDIDATE, LEADER}];
+    logs = [log \in NODES |-> <<[term |-> globalCurrentTerm, value |-> VALUE]>>];
 
 
 \* term of the last entry in a log.
@@ -57,13 +54,7 @@ el0: while (curNode <= NUM_NODES) {
         canElectMe(logs[self], logs[curNode], numElectMe);
         curNode := curNode + 1;
      };
-     print<<"num elected me: ", numElectMe, "I am: ", self>>;
-     
-     if (numElectMe * 2 > NUM_NODES) {
-        globalCurrentTerm := globalCurrentTerm + 1;
-        states := [[state \in NODES |-> FOLLOWER] EXCEPT ![self] = LEADER];
-        print <<"won election, states: ", self, states>>;
-     };
+     print<<"numElectMe: ", self, numElectMe>>;
      
      
      
@@ -89,11 +80,9 @@ pr1: call instantElection();
 }
 *)
 \* BEGIN TRANSLATION
-VARIABLES globalCurrentTerm, rVals, logs, states, pc, stack, numElectMe, 
-          curNode
+VARIABLES globalCurrentTerm, rVals, logs, pc, stack, numElectMe, curNode
 
-vars == << globalCurrentTerm, rVals, logs, states, pc, stack, numElectMe, 
-           curNode >>
+vars == << globalCurrentTerm, rVals, logs, pc, stack, numElectMe, curNode >>
 
 ProcSet == (NODES)
 
@@ -101,7 +90,6 @@ Init == (* Global variables *)
         /\ globalCurrentTerm = 0
         /\ rVals = [rVal \in NODES |-> {0}]
         /\ logs = [log \in NODES |-> <<[term |-> globalCurrentTerm, value |-> VALUE]>>]
-        /\ states = [state \in NODES |-> {FOLLOWER, CANDIDATE, LEADER}]
         (* Procedure instantElection *)
         /\ numElectMe = [ self \in ProcSet |-> 0]
         /\ curNode = [ self \in ProcSet |-> 1]
@@ -118,25 +106,18 @@ el0(self) == /\ pc[self] = "el0"
                                        /\ UNCHANGED numElectMe
                         /\ curNode' = [curNode EXCEPT ![self] = curNode[self] + 1]
                         /\ pc' = [pc EXCEPT ![self] = "el0"]
-                        /\ UNCHANGED << globalCurrentTerm, states >>
-                   ELSE /\ PrintT(<<"num elected me: ", numElectMe[self], "I am: ", self>>)
-                        /\ IF numElectMe[self] * 2 > NUM_NODES
-                              THEN /\ globalCurrentTerm' = globalCurrentTerm + 1
-                                   /\ states' = [[state \in NODES |-> FOLLOWER] EXCEPT ![self] = LEADER]
-                                   /\ PrintT(<<"won election, states: ", self, states'>>)
-                              ELSE /\ TRUE
-                                   /\ UNCHANGED << globalCurrentTerm, states >>
+                   ELSE /\ PrintT(<<"numElectMe: ", self, numElectMe[self]>>)
                         /\ pc' = [pc EXCEPT ![self] = "Error"]
                         /\ UNCHANGED << numElectMe, curNode >>
-             /\ UNCHANGED << rVals, logs, stack >>
+             /\ UNCHANGED << globalCurrentTerm, rVals, logs, stack >>
 
 instantElection(self) == el0(self)
 
 pr0(self) == /\ pc[self] = "pr0"
              /\ PrintT(<<"starting process: ", self, logs[self]>>)
              /\ pc' = [pc EXCEPT ![self] = "pr1"]
-             /\ UNCHANGED << globalCurrentTerm, rVals, logs, states, stack, 
-                             numElectMe, curNode >>
+             /\ UNCHANGED << globalCurrentTerm, rVals, logs, stack, numElectMe, 
+                             curNode >>
 
 pr1(self) == /\ pc[self] = "pr1"
              /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "instantElection",
@@ -147,7 +128,7 @@ pr1(self) == /\ pc[self] = "pr1"
              /\ numElectMe' = [numElectMe EXCEPT ![self] = 0]
              /\ curNode' = [curNode EXCEPT ![self] = 1]
              /\ pc' = [pc EXCEPT ![self] = "el0"]
-             /\ UNCHANGED << globalCurrentTerm, rVals, logs, states >>
+             /\ UNCHANGED << globalCurrentTerm, rVals, logs >>
 
 Node(self) == pr0(self) \/ pr1(self)
 

@@ -8,8 +8,6 @@ CONSTANT VALUE
 
 CONSTANT TERMS
 
-CONSTANTS FOLLOWER, LEADER, CANDIDATE
-
 Last(s) == s[Len(s)]
 
 (*
@@ -17,8 +15,7 @@ Last(s) == s[Len(s)]
 variable
     globalCurrentTerm = 0,
     rVals = [rVal \in NODES |-> {0}],
-    logs = [log \in NODES |-> <<[term |-> globalCurrentTerm, value |-> VALUE]>>],
-    states = [state \in NODES |-> {FOLLOWER, CANDIDATE, LEADER}];
+    logs = [log \in NODES |-> <<[term |-> globalCurrentTerm, value |-> VALUE]>>];
 
 
 \* term of the last entry in a log.
@@ -42,31 +39,18 @@ macro LastTerm(xlog, term) {
 \*    };
 \*}
 
-macro canElectMe(myLogs, theirLogs, numElectMe) {
-    with (myTerm = Last(myLogs).term, theirTerm = Last(theirLogs).term) {
-        if (myTerm > theirTerm \/ (theirTerm = myTerm /\ Len(logs[self]) >= Len(logs[curNode]))) {
-            numElectMe := numElectMe + 1;
-        }
-    }
-}
-
 procedure instantElection() 
-variables numElectMe = 0, curNode = 1;
+variables electable = TRUE, myTerm, theirTerm, curNode = 1;
 {
 el0: while (curNode <= NUM_NODES) {
-        canElectMe(logs[self], logs[curNode], numElectMe);
+        if (curNode # self) {
+            myTerm := Last(logs[curNode]).term;
+            theirTerm := Last(logs[self]).term;        
+            electable := electable /\ (myTerm > theirTerm \/ (theirTerm = myTerm /\ Len(logs[self]) >= Len(logs[curNode])));
+        };
         curNode := curNode + 1;
      };
-     print<<"num elected me: ", numElectMe, "I am: ", self>>;
-     
-     if (numElectMe * 2 > NUM_NODES) {
-        globalCurrentTerm := globalCurrentTerm + 1;
-        states := [[state \in NODES |-> FOLLOWER] EXCEPT ![self] = LEADER];
-        print <<"won election, states: ", self, states>>;
-     };
-     
-     
-     
+     print<<electable>>;
 }
 
 \*electable := Tail(log).term > Tail(logs[self]).term \/
@@ -89,11 +73,12 @@ pr1: call instantElection();
 }
 *)
 \* BEGIN TRANSLATION
-VARIABLES globalCurrentTerm, rVals, logs, states, pc, stack, numElectMe, 
-          curNode
+CONSTANT defaultInitValue
+VARIABLES globalCurrentTerm, rVals, logs, pc, stack, electable, myTerm, 
+          theirTerm, curNode
 
-vars == << globalCurrentTerm, rVals, logs, states, pc, stack, numElectMe, 
-           curNode >>
+vars == << globalCurrentTerm, rVals, logs, pc, stack, electable, myTerm, 
+           theirTerm, curNode >>
 
 ProcSet == (NODES)
 
@@ -101,53 +86,52 @@ Init == (* Global variables *)
         /\ globalCurrentTerm = 0
         /\ rVals = [rVal \in NODES |-> {0}]
         /\ logs = [log \in NODES |-> <<[term |-> globalCurrentTerm, value |-> VALUE]>>]
-        /\ states = [state \in NODES |-> {FOLLOWER, CANDIDATE, LEADER}]
         (* Procedure instantElection *)
-        /\ numElectMe = [ self \in ProcSet |-> 0]
+        /\ electable = [ self \in ProcSet |-> TRUE]
+        /\ myTerm = [ self \in ProcSet |-> defaultInitValue]
+        /\ theirTerm = [ self \in ProcSet |-> defaultInitValue]
         /\ curNode = [ self \in ProcSet |-> 1]
         /\ stack = [self \in ProcSet |-> << >>]
         /\ pc = [self \in ProcSet |-> "pr0"]
 
 el0(self) == /\ pc[self] = "el0"
              /\ IF curNode[self] <= NUM_NODES
-                   THEN /\ LET myTerm == Last((logs[self])).term IN
-                             LET theirTerm == Last((logs[curNode[self]])).term IN
-                               IF myTerm > theirTerm \/ (theirTerm = myTerm /\ Len(logs[self]) >= Len(logs[curNode[self]]))
-                                  THEN /\ numElectMe' = [numElectMe EXCEPT ![self] = numElectMe[self] + 1]
-                                  ELSE /\ TRUE
-                                       /\ UNCHANGED numElectMe
+                   THEN /\ IF curNode[self] # self
+                              THEN /\ myTerm' = [myTerm EXCEPT ![self] = Last(logs[curNode[self]]).term]
+                                   /\ theirTerm' = [theirTerm EXCEPT ![self] = Last(logs[self]).term]
+                                   /\ electable' = [electable EXCEPT ![self] = electable[self] /\ (myTerm'[self] > theirTerm'[self] \/ (theirTerm'[self] = myTerm'[self] /\ Len(logs[self]) >= Len(logs[curNode[self]])))]
+                              ELSE /\ TRUE
+                                   /\ UNCHANGED << electable, myTerm, 
+                                                   theirTerm >>
                         /\ curNode' = [curNode EXCEPT ![self] = curNode[self] + 1]
                         /\ pc' = [pc EXCEPT ![self] = "el0"]
-                        /\ UNCHANGED << globalCurrentTerm, states >>
-                   ELSE /\ PrintT(<<"num elected me: ", numElectMe[self], "I am: ", self>>)
-                        /\ IF numElectMe[self] * 2 > NUM_NODES
-                              THEN /\ globalCurrentTerm' = globalCurrentTerm + 1
-                                   /\ states' = [[state \in NODES |-> FOLLOWER] EXCEPT ![self] = LEADER]
-                                   /\ PrintT(<<"won election, states: ", self, states'>>)
-                              ELSE /\ TRUE
-                                   /\ UNCHANGED << globalCurrentTerm, states >>
+                   ELSE /\ PrintT(<<electable[self]>>)
                         /\ pc' = [pc EXCEPT ![self] = "Error"]
-                        /\ UNCHANGED << numElectMe, curNode >>
-             /\ UNCHANGED << rVals, logs, stack >>
+                        /\ UNCHANGED << electable, myTerm, theirTerm, curNode >>
+             /\ UNCHANGED << globalCurrentTerm, rVals, logs, stack >>
 
 instantElection(self) == el0(self)
 
 pr0(self) == /\ pc[self] = "pr0"
              /\ PrintT(<<"starting process: ", self, logs[self]>>)
              /\ pc' = [pc EXCEPT ![self] = "pr1"]
-             /\ UNCHANGED << globalCurrentTerm, rVals, logs, states, stack, 
-                             numElectMe, curNode >>
+             /\ UNCHANGED << globalCurrentTerm, rVals, logs, stack, electable, 
+                             myTerm, theirTerm, curNode >>
 
 pr1(self) == /\ pc[self] = "pr1"
              /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "instantElection",
                                                       pc        |->  "Done",
-                                                      numElectMe |->  numElectMe[self],
+                                                      electable |->  electable[self],
+                                                      myTerm    |->  myTerm[self],
+                                                      theirTerm |->  theirTerm[self],
                                                       curNode   |->  curNode[self] ] >>
                                                   \o stack[self]]
-             /\ numElectMe' = [numElectMe EXCEPT ![self] = 0]
+             /\ electable' = [electable EXCEPT ![self] = TRUE]
+             /\ myTerm' = [myTerm EXCEPT ![self] = defaultInitValue]
+             /\ theirTerm' = [theirTerm EXCEPT ![self] = defaultInitValue]
              /\ curNode' = [curNode EXCEPT ![self] = 1]
              /\ pc' = [pc EXCEPT ![self] = "el0"]
-             /\ UNCHANGED << globalCurrentTerm, rVals, logs, states >>
+             /\ UNCHANGED << globalCurrentTerm, rVals, logs >>
 
 Node(self) == pr0(self) \/ pr1(self)
 
